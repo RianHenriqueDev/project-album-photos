@@ -5,17 +5,17 @@
 Run the install command
 
 ```
-pnpm install
+npm install
 ```
 
 Then in a terminal run the backend server
 
 ```
-pnpm dev-server
+npm run dev-server
 ```
 
 In another terminal run the frontend server
 
 ```
-pnpm dev
+npm run dev
 ```
