@@ -1,10 +1,11 @@
-import type React from "react";
+import React from "react";
 import type { Photo } from "../../photos/models/photo";
 import type { Album } from "../models/album";
 import Text from "../../../components/text";
 import InputCheckbox from "../../../components/input-checkbox";
 import Divider from "../../../components/divider";
 import Skeleton from "../../../components/skeleton";
+import usePhotoAlbums from "../../photos/hooks/use-photo-albums";
 
 interface AlbumsListSelectableProps extends React.ComponentProps<"div">{
     loading?:boolean;
@@ -14,10 +15,15 @@ interface AlbumsListSelectableProps extends React.ComponentProps<"div">{
 
 
 export default function AlbumsListSelectable({albums,photo,loading}: AlbumsListSelectableProps) {
+    
+    const {managePhotoOnAlbum} = usePhotoAlbums();
+    const [isUpdatingPhoto, setIsUpdatingPhoto] = React.useTransition();
 
     function isChecked(albumId:string) {
         return photo?.albums?.some(photoAlbum => photoAlbum.id === albumId);
     }
+
+
 
     function handlePhotoOnAlbums(albumId:string) {
         let albumsIds = [];
@@ -27,14 +33,19 @@ export default function AlbumsListSelectable({albums,photo,loading}: AlbumsListS
         }else {
             albumsIds = [...photo.albums.map(album => album.id), albumId]
         }
+
+        setIsUpdatingPhoto(async()=> {
+                    await managePhotoOnAlbum(photo.id, albumsIds);
+
+        })
     }
 
     return <ul className="flex flex-col gap-4">
         
-        {!loading  && albums.length > 0 && albums.map((album,index)=> <li key={album.id}>
+        {!loading  && photo && albums.length > 0 && albums.map((album,index)=> <li key={album.id}>
             <div className="flex items-center justify-between gap-1">
  <Text variant="paragraph-large" className="truncate">{album.title}</Text>
-            <InputCheckbox defaultChecked={isChecked(album.id)} onClick={()=> handlePhotoOnAlbums(album.id)}/>
+            <InputCheckbox defaultChecked={isChecked(album.id)} onChange={()=> handlePhotoOnAlbums(album.id)} disabled={isUpdatingPhoto}/>
            
             </div>
             {index !== albums.length - 1 && <Divider className="mt-4"/>}

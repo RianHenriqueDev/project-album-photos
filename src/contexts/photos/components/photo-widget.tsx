@@ -13,7 +13,7 @@ interface PhotoWidgetProps {
 
 export default function PhotoWidget({photo,loading}: PhotoWidgetProps) {
     return <div className="flex flex-col gap-4">
-{!loading ? (<ImagePreview src={`/images/${photo.imageId}`} title={photo.title} imageClassName="w-[13.5625rem] h-[13.5625rem] rounded-lg"/>)
+{!loading ? (<ImagePreview src={`${import.meta.env.VITE_IMAGES_URL}/${photo.imageId}`} title={photo.title} imageClassName="w-[13.5625rem] h-[13.5625rem] rounded-lg"/>)
 
 :
 ( <Skeleton className="w-[13.5625rem] h-[13.5625rem] rounded-lg"/>)}

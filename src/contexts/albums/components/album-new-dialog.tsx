@@ -1,4 +1,4 @@
-import type React from "react";
+import React, { useTransition } from "react";
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTrigger } from "../../../components/dialog";
 import Button from "../../../components/button";
 import InputText from "../../../components/input-text";
@@ -8,67 +8,94 @@ import SelectCheckboxIllustration from '../../../assets/images/select-checkbox.s
 import Skeleton from "../../../components/skeleton";
 import ImagePreview from "../../../components/image-file-preview";
 import PhotoImageSelectable from "../../photos/components/photo-image-selectable";
+import usePhotos from "../../photos/hooks/use-photos";
+import { useForm } from "react-hook-form";
+import { albumNewFormSchema, type AlbumNewFormSchema } from "../schemas";
+import { zodResolver } from "@hookform/resolvers/zod";
+import useAlbum from "../hooks/use-album";
 
 interface AlbumNewDialogProps {
     trigger: React.ReactNode;
 }
 export default function AlbumNewDialog({trigger} : AlbumNewDialogProps) {
-    const isLoadingPhotos = false;
-    const photos: Photo[] = [{
-            id: '123',
-            title: "Olá Mundo!",
-            imageId:"portrait-tower.png",
-            albums: [
-                {id: '321', title: "Album 1"},
-                {id: '123', title: "Album 2"},
-                {id: '456', title: "Album 3"}
-            ]
-            },
-            {
-            id: '321',
-            title: "Olá Mundo 2!",
-            imageId:"portrait-tower.png",
-            albums: [
-                {id: '456', title: "Album 1"},
-                {id: '786', title: "Album 2"},
-                {id: '101', title: "Album 3"}
-            ]
-            }];
+
+    const [modalOpen, setModalOpen] = React.useState(false);
+
+    const form = useForm<AlbumNewFormSchema>({
+        resolver: zodResolver(albumNewFormSchema)
+    });
+
+    const {isLoadingPhoto,photos} = usePhotos();
+    const {createAlbum} = useAlbum();
+    const [isCreatingAlbum, setIsCreatingAlbum] = useTransition();
+
+
+    function handleSubmit(payload: AlbumNewFormSchema) {
+       setIsCreatingAlbum(async ()=> {
+        await createAlbum(payload);
+        setModalOpen(false);
+       })
+    }
+
+    React.useEffect(()=> {
+
+        if(!modalOpen) {
+            form.reset();
+        }
+
+    },[modalOpen,form])
 
 
 
-            function handleTogglePhoto(selected:boolean, photoId:string) {
-                    console.log(selected, "Id photo: ",photoId)
-            }
+    function handleTogglePhoto(selected:boolean, photoId:string) {
+    const photosIds = form.getValues("photosIds") || [];
+
+    let newValue = [];
+
+    if(selected) {
+        newValue = [...photosIds,photoId];
+    }else {
+        newValue = photosIds?.filter((id)=> id !== photoId);
+    }
+
+    form.setValue("photosIds",newValue);
+    }
 
 
 
-    return (<Dialog>
+    return (<Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogTrigger>{trigger}</DialogTrigger>
         <DialogContent>
+            <form onSubmit={form.handleSubmit(handleSubmit)}>
+
+            
             <DialogHeader>Criar álbum</DialogHeader>
             <DialogBody>
-                <InputText placeholder="Adicione um título"/>
+                <InputText placeholder="Adicione um título" error={form.formState.errors.title?.message} {...form.register("title")} />
                 
                 <div className="space-y-3">
                     <Text variant="label-small" className="mb-3" as="div">Fotos cadastradas</Text>
 
-                    {!isLoadingPhotos && photos.length > 0 &&
+                    {!isLoadingPhoto && photos.length > 0 &&
                     <div className="flex flex-wrap gap-2">
 
-{photos.map(photo => <PhotoImageSelectable  onSelectImage={(selected)=> handleTogglePhoto(selected,photo.id)} key={photo.id} src={`/images/${photo.imageId}`} title={photo.title} imageClassName="h-20 w-20"/>)}
+{photos.map(photo => <PhotoImageSelectable  
+onSelectImage={(selected)=> 
+handleTogglePhoto(selected,photo.id)} 
+key={photo.id} 
+src={`${import.meta.env.VITE_IMAGES_URL}/${photo.imageId}`} title={photo.title} imageClassName="h-20 w-20"/>)}
 
 
                     </div>
                     }
 
-                {isLoadingPhotos && (<div className="flex flex-wrap gap-2"> 
+                {isLoadingPhoto && (<div className="flex flex-wrap gap-2"> 
                     { 
                         Array.from({length: 4}).map((_,index) => 
                         <Skeleton key={`photo-loading-${index}`} className="w-20 h-20 rounded-lg"/>)}
                         </div>)}
 
-                {!isLoadingPhotos && photos.length === 0 && 
+                {!isLoadingPhoto && photos.length === 0 && 
                 <div className="w-full flex flex-col justify-center items-center gap-3">
 
                     <SelectCheckboxIllustration/>
@@ -80,10 +107,11 @@ export default function AlbumNewDialog({trigger} : AlbumNewDialogProps) {
             </DialogBody>
             <DialogFooter>
                 <DialogClose asChild>
-                    <Button variant="secondary">Cancelar</Button>
+                    <Button variant="secondary" disabled={isCreatingAlbum}>Cancelar</Button>
                 </DialogClose>
-                <Button>Criar</Button>
+                <Button type="submit" disabled={isCreatingAlbum} handling={isCreatingAlbum}>{isCreatingAlbum ? "Criando...": "Criar" }</Button>
             </DialogFooter>
+            </form>
         </DialogContent>
     </Dialog>)
 }

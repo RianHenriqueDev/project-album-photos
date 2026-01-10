@@ -3,7 +3,15 @@ import CheckIcon from '../assets/icons/check.svg?react'
 import Icon from './icon'
 
 export const inputCheckboxWrapperVariants = tv({
-    base: "inline-flex items-center justify-center relative group"
+    base: "inline-flex items-center justify-center relative group",
+    variants: {
+        disabled: {
+            true: "pointer-events-none opacity-80"
+        }
+    },
+    defaultVariants: {
+        disabled: false
+    }
 });
 
 export const inputCheckboxVariants = tv({
@@ -40,16 +48,16 @@ export const inputCheckboxIconVariants = tv({
     }
 });
 
-interface InputCheckboxProps extends VariantProps<typeof inputCheckboxVariants>, Omit<React.ComponentProps<"input">,"size"| "disabled"> {}
+interface InputCheckboxProps extends VariantProps<typeof inputCheckboxVariants>, Omit<React.ComponentProps<"input">,"size"> {}
 
 
 
 export default function InputCheckbox({variant,size,disabled,className,...props} :InputCheckboxProps) {
 
     return (
-        <label className={inputCheckboxWrapperVariants({className})}>
+        <label className={inputCheckboxWrapperVariants({className,disabled})}>
 
-            <input type="checkbox" {...props}  className={inputCheckboxVariants({variant,size,disabled})}/>
+            <input type="checkbox" {...props}  className={inputCheckboxVariants({variant,size})}/>
             <Icon svg={CheckIcon} className={inputCheckboxIconVariants({size})}/>
             
            </label>
